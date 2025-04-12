@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Power PTC: Mrs. Pushparaj's Chase</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #e0f7fa; overflow: hidden; }
+    canvas { display: block; margin: 0 auto; background: #b2ebf2; border: 2px solid #006064; }
+    #loading { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 20px; font-weight: bold; color: #006064; }
+  </style>
+</head>
+<body>
+  <div id="loading">Mrs. Pushparaj is PREPARING POWER AND WATER REPORT with the help of Queen of PTC Manu…</div>
+  <canvas id="gameCanvas" width="800" height="400"></canvas>
+
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    document.getElementById('loading').style.display = 'none';
+
+    // Game Variables
+    let player = { x: 50, y: 320, width: 40, height: 40, vy: 0, jump: false };
+    let gravity = 1;
+    let obstacles = [];
+    let frames = 0;
+    let score = 0;
+    let gameSpeed = 5;
+    let isGameOver = false;
+
+    const obstacleNames = ["DGM", "LAST DAY 5TH", "FAIZAL SIR", "SUDHAKAR", "KARNAN"];
+
+    // Input
+    document.addEventListener('keydown', (e) => {
+      if (e.code === 'Space' && !player.jump) {
+        player.vy = -15;
+        player.jump = true;
+        playSound('jump');
+      }
+    });
+
+    // Obstacle generator
+    function createObstacle() {
+      const label = obstacleNames[Math.floor(Math.random() * obstacleNames.length)];
+      obstacles.push({
+        x: canvas.width,
+        y: 320,
+        width: 40,
+        height: 40,
+        label,
+      });
+    }
+
+    function drawPlayer() {
+      ctx.fillStyle = '#ab47bc';
+      ctx.fillRect(player.x, player.y, player.width, player.height);
+      ctx.fillStyle = '#000';
+      ctx.font = '12px sans-serif';
+      ctx.fillText('Mrs. Pushparaj', player.x - 10, player.y - 10);
+    }
+
+    function drawObstacles() {
+      ctx.fillStyle = '#ff7043';
+      for (let obs of obstacles) {
+        ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+        ctx.fillStyle = '#000';
+        ctx.font = '10px sans-serif';
+        ctx.fillText(obs.label, obs.x - 5, obs.y - 5);
+        ctx.fillStyle = '#ff7043';
+      }
+    }
+
+    function checkCollision() {
+      for (let obs of obstacles) {
+        if (
+          player.x < obs.x + obs.width &&
+          player.x + player.width > obs.x &&
+          player.y < obs.y + obs.height &&
+          player.y + player.height > obs.y
+        ) {
+          isGameOver = true;
+          playSound('hit');
+        }
+      }
+    }
+
+    function drawScore() {
+      ctx.fillStyle = '#004d40';
+      ctx.font = '20px sans-serif';
+      ctx.fillText(`Score: ${score}`, 650, 30);
+    }
+
+    function gameOverScreen() {
+      ctx.fillStyle = 'rgba(0,0,0,0.7)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#fff';
+      ctx.font = '30px sans-serif';
+      ctx.fillText('Game Over! Jishnu has won... 😭', 200, 180);
+      ctx.fillText(`Score: ${score}`, 320, 230);
+    }
+
+    function gameLoop() {
+      if (isGameOver) return gameOverScreen();
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Physics
+      player.vy += gravity;
+      player.y += player.vy;
+      if (player.y > 320) {
+        player.y = 320;
+        player.jump = false;
+      }
+
+      // Spawn obstacles
+      if (frames % 90 === 0) createObstacle();
+
+      // Move obstacles
+      for (let obs of obstacles) {
+        obs.x -= gameSpeed;
+      }
+      obstacles = obstacles.filter(o => o.x + o.width > 0);
+
+      drawPlayer();
+      drawObstacles();
+      drawScore();
+      checkCollision();
+
+      frames++;
+      score++;
+      requestAnimationFrame(gameLoop);
+    }
+
+    function playSound(type) {
+      const sounds = {
+        jump: new Audio('https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg'),
+        hit: new Audio('https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg')
+      };
+      sounds[type].play();
+    }
+
+    // Start game
+    gameLoop();
+  </script>
+</body>
+</html>
